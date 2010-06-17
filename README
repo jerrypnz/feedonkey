@@ -1,0 +1,15 @@
+Feed Donkey
+
+
+Introduction
+===========
+
+Feed Donkey is a program that automatically checks update of VeryCD(http://www.verycd.com.cn) feeds, and add the updated files' ed2k links to
+MLDonkey.
+Future version will support other ed2k download programs, e.g. aMule.
+
+
+License
+=======
+This program is released under the GNU General Public License (GPL) version 2, see the file 'COPYING' for more information.
+

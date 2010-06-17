@@ -1,0 +1,9 @@
+#!/usr/bin/python
+
+from feedonkey import core
+from feedonkey import ed2klink
+
+if __name__ == "__main__":
+    daemon = core.VeryCDFeedDownloader()
+    daemon.run_daemon()
+
