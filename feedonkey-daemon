@@ -4,6 +4,8 @@ from feedonkey import core
 from feedonkey import ed2klink
 
 if __name__ == "__main__":
-    daemon = core.VeryCDFeedDownloader()
+    #Add the ed2k links to MLDonkey by default
+    ed2k_handler = ed2klink.MLDonkeyLinkHandler()
+    daemon = core.VeryCDFeedDownloader(ed2k_handler)
     daemon.run_daemon()
 
