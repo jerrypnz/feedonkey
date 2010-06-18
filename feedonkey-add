@@ -1,0 +1,74 @@
+#!/usr/bin/python
+
+import getopt
+import sys
+import re
+from datetime import datetime
+from feedonkey import core
+
+def add_feed(topic_id, filter, start_time_str):
+    """add feed to the feeds.list"""
+    if filter == None:
+        filter = ".+"
+    
+    if start_time_str != None:
+        try:
+            datetime.strptime(start_time_str, core.INTERNAL_DATE_FORMAT)
+        except Exception:
+            print 'Invalid date. The date format must match %s' % core.INTERNAL_DATE_FORMAT
+            return None
+
+    feedfile = file(core.FEED_LIST_FILE, 'a')
+    feedfile.write('%s\t\t%s\t\t%s\n' % (topic_id, filter, start_time_str))
+    feedfile.close()
+
+
+def usage(arg0):
+    """print usage on the screen"""
+    print "Usage: %s [-p regex] [-s datetime] topic_id" % arg0
+    print "\t-p regex  The regular expression to filter the files. If not specified, all files are included."
+    print "\t-s datetime  Only the files updated after this will be downloaded. If it is empty, all files are included."
+    print "\ttopic_id  The VeryCD topic ID. e.g. for the resource http://www.verycd.com/topics/2788657/, 2788657 is its topic ID"
+
+
+def build_url(topic_id):
+    """buiding VeryCD feed topic_id from the given topic id"""
+    return "http://www.verycd.com/topics/%s/feed" % topic_id
+
+
+def main():
+    try:
+        opts, args = getopt.getopt(sys.argv[1:], 'p:s:h', ['help'])
+    except getopt.GetoptError, e:
+        print str(e)
+        usage(sys.argv[0])
+        sys.exit(2)
+
+    topic_id, filter, start_date_str = None, '.+', None
+
+    for op, arg in opts:
+        if op == "-p":
+            filter = arg
+        elif op == "-s":
+            start_time_str = arg
+        elif op in ("-h", "--help"):
+            usage(sys.argv[0])
+            sys.exit()
+
+    if len(args) == 0:
+        print "missing the feed topic_id"
+        usage(sys.argv[0])
+        sys.exit()
+
+    topic_id = args[0]
+    if not re.match('[0-9]+', topic_id):
+        print "Invalid topic ID: %s" % topic_id
+        sys.exit(2)
+
+    url = build_url(topic_id)
+    add_feed(url, filter, start_time_str)
+            
+
+if __name__ == "__main__":
+    main()
+    
