@@ -44,7 +44,7 @@ def main():
         usage(sys.argv[0])
         sys.exit(2)
 
-    topic_id, filter, start_date_str = None, '.+', None
+    topic_id, filter, start_time_str = None, '.+', None
 
     for op, arg in opts:
         if op == "-p":
