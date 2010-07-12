@@ -8,11 +8,9 @@ from datetime import datetime
 from feedonkey.utils import line_token_iterator
 from feedonkey.config import CONFIG_DIR
 from feedonkey.logger import log
-from feedonkey import ed2klink
 from feedonkey import notify
 
 #--- Constants ----------------------------------------------
-RSS_DATE_FORMAT = '%a, %d %b %Y %H:%M:%S'
 INTERNAL_DATE_FORMAT = '%Y-%m-%d_%H:%M:%S'
 FEED_LIST_FILE = os.path.join(CONFIG_DIR, "feeds.list")
 HISTORY_FILE = os.path.join(CONFIG_DIR, "histories.conf")
@@ -29,12 +27,12 @@ class FeedObserver(object):
         self.current_latest_time = last_update_time
 
 
-    def __is_new(self, item_date_s):
+    def __is_new(self, item_date_tup):
         """compare the date in an rss item with last update time of this feed"""
-        item_date = datetime.strptime(item_date_s.replace(' +0000',''), RSS_DATE_FORMAT)
-        if self.last_update_time == None or item_date > self.last_update_time:
-            if self.current_latest_time == None or item_date > self.current_latest_time:
-                self.current_latest_time = item_date
+        item_time = time.mktime(item_date_tup)
+        if self.last_update_time == None or item_time > self.last_update_time:
+            if self.current_latest_time == None or item_time > self.current_latest_time:
+                self.current_latest_time = item_time
             return True
         else:
             return False
@@ -43,12 +41,11 @@ class FeedObserver(object):
     def check_updates(self):
         """extract a list of file info from a given verycd feed URL"""
         feed = feedparser.parse(self.url)
-        items = feed['items']
         return [
-                item['description'].encode('UTF-8')
-                for item in items
-                if re.match(self.filter_reg, item['title'])
-                    and self.__is_new(item['date'].encode('UTF-8'))
+                item.description.encode('UTF-8')
+                for item in feed.entries
+                if re.match(self.filter_reg, item.title)
+                    and self.__is_new(item.date_parsed)
                ]
 
 
@@ -65,7 +62,7 @@ class FeedConfigFileMgr(object):
         histories = {}
         if os.path.exists(HISTORY_FILE):
             for parts in line_token_iterator(HISTORY_FILE):
-                histories[parts[0]] = datetime.strptime(parts[1], INTERNAL_DATE_FORMAT)
+                histories[parts[0]] = float(parts[1])
 
         feeds = []
         for parts in line_token_iterator(FEED_LIST_FILE, support_comment=True):
@@ -81,7 +78,8 @@ class FeedConfigFileMgr(object):
 
             if last_update_time == None and total_parts > 2:
                 try:
-                    last_update_time = datetime.strptime(parts[2], INTERNAL_DATE_FORMAT)
+                    tmp_time_struct = datetime.strptime(parts[2], INTERNAL_DATE_FORMAT).timetuple()
+                    last_update_time = time.mktime(tmp_time_struct)
                 except ValueError, e:
                     log.error('invalid date: %s' % parts[2], e)
                     pass
@@ -97,7 +95,7 @@ class FeedConfigFileMgr(object):
         his_file = file(HISTORY_FILE, 'w')
         for url, last_update_time in histories.items():
             if last_update_time != None:
-                his_file.write("%s %s \n" %(url, datetime.strftime(last_update_time, INTERNAL_DATE_FORMAT)))
+                his_file.write("%s %f \n" %(url, last_update_time))
         his_file.close()
 
 
